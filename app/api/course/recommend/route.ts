@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"; // Next.js 13에서 API 라우트에서 JSON 응답을 반환할 때 사용합니다.
-import{buildCourseRecommendation} from "@/lib/course/recommendation";// 추천 코스를 생성하는 로직을 별도의 모듈로 분리하여 가져옵니다.
+import { buildRecommendedCourses } from "@/lib/recommendation/build-course";// 추천 코스를 생성하는 로직을 별도의 모듈로 분리하여 가져옵니다.
 import type{
   AgeGroup,
   PartyType,

@@ -199,10 +199,25 @@ function pickPlaces(places: SamplePlace[], startIndex: number, count: number): P
   return Array.from({ length: Math.min(count, places.length) }, (_, index) => {
     const place = places[(startIndex + index) % places.length];
 
-    // Course.places에는 Place 타입만 들어가야 하므로 내부용 regionId는 제거합니다.
-    const { regionId: _regionId, ...placeWithoutRegionId } = place;
-
-    return placeWithoutRegionId;
+    return {
+        id: place.id,
+        name: place.name,
+        category: place.category,
+        address: place.address,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        imageUrl: place.imageUrl,
+        tags: place.tags,
+        isPetFriendly: place.isPetFriendly,
+        contentId: place.contentId,
+        contentTypeId: place.contentTypeId,
+        overview: place.overview,
+        tel: place.tel,
+        homepage: place.homepage,
+        parking: place.parking,
+        openTime: place.openTime,
+        source: place.source,
+        };
   });
 }
 
