@@ -3,6 +3,25 @@ type TourApiParams = Record<
   string | number | boolean | null | undefined
 >;
 
+type TourApiService = "kor" | "pet";
+
+type TourApiEnvelope<T> = {
+  response?: {
+    header?: {
+      resultCode?: string;
+      resultMsg?: string;
+    };
+    body?: {
+      items?: {
+        item?: T | T[];
+      };
+      totalCount?: string | number;
+      pageNo?: string | number;
+      numOfRows?: string | number;
+    };
+  };
+};
+
 export type TourApiSuccess<T = unknown> = {
   ok: true;
   items: T[];
@@ -22,7 +41,10 @@ export type TourApiFailure = {
 
 export type TourApiResult<T = unknown> = TourApiSuccess<T> | TourApiFailure;
 
-const TOUR_API_BASE_URL = "https://apis.data.go.kr/B551011/KorService2";
+const TOUR_API_BASE_URLS: Record<TourApiService, string> = {
+  kor: "https://apis.data.go.kr/B551011/KorService2",
+  pet: "https://apis.data.go.kr/B551011/KorPetTourService2",
+};
 
 function getTourApiKey(): string | null {
   const key = process.env.TOUR_API_KEY;
@@ -44,6 +66,9 @@ function toArray<T>(value: T | T[] | null | undefined): T[] {
 export async function requestTourApi<T = unknown>(
   endpoint: string,
   params: TourApiParams = {},
+  options: {
+    service?: TourApiService;
+  } = {},
 ): Promise<TourApiResult<T>> {
   const serviceKey = getTourApiKey();
 
@@ -55,7 +80,9 @@ export async function requestTourApi<T = unknown>(
     };
   }
 
-  const url = new URL(`${TOUR_API_BASE_URL}/${endpoint.replace(/^\//, "")}`);
+  const service = options.service ?? "kor";
+  const baseUrl = TOUR_API_BASE_URLS[service];
+  const url = new URL(`${baseUrl}/${endpoint.replace(/^\//, "")}`);
 
   url.searchParams.set("serviceKey", serviceKey);
   url.searchParams.set("MobileOS", "ETC");
@@ -75,20 +102,18 @@ export async function requestTourApi<T = unknown>(
 
     const text = await response.text();
 
-    let data: any;
+    let data: TourApiEnvelope<T>;
 
-   try {
-  data = JSON.parse(text);
-} catch {
-  console.error("관광공사 API 원본 응답:", text);
-
-  return {
-    ok: false,
-    status: response.status,
-    message: "관광공사 API 응답이 JSON 형식이 아닙니다.",
-    raw: text.slice(0, 500),
-  };
-}
+    try {
+      data = JSON.parse(text) as TourApiEnvelope<T>;
+    } catch {
+      return {
+        ok: false,
+        status: response.status || 502,
+        message: "관광공사 API 응답이 JSON 형식이 아닙니다.",
+        raw: text.slice(0, 500),
+      };
+    }
 
     if (!response.ok) {
       return {
@@ -99,8 +124,8 @@ export async function requestTourApi<T = unknown>(
       };
     }
 
-    const header = data?.response?.header;
-    const body = data?.response?.body;
+    const header = data.response?.header;
+    const body = data.response?.body;
 
     if (header?.resultCode && header.resultCode !== "0000") {
       return {
@@ -112,8 +137,7 @@ export async function requestTourApi<T = unknown>(
       };
     }
 
-    const rawItems = body?.items?.item;
-    const items = toArray<T>(rawItems);
+    const items = toArray<T>(body?.items?.item);
 
     return {
       ok: true,
