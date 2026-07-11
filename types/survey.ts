@@ -1,4 +1,4 @@
-export type RegionId = "gangneung" | "goseong-sokcho" | "yangyang" | "donghae" | "samcheok";
+export type RegionId = "gangneung" | "sokcho" | "yangyang" | "donghae" | "samcheok";
 
 export type PartyType = "solo" | "couple" | "family" | "group";
 

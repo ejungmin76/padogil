@@ -8,12 +8,12 @@ export function getPreferredTags(survey: SurveyResponse): string[] {
   // 권역별 대표 태그입니다.
   // 사용자가 선택한 지역의 성격을 추천에 반영하기 위해 사용합니다.
   const regionTags: Record<SurveyResponse["regionId"], string[]> = {
-    gangneung: ["#커피", "#오션뷰", "#문화"],
-    "goseong-sokcho": ["#자연", "#가족여행", "#역사"],
-    yangyang: ["#서핑", "#액티비티", "#청년여행"],
-    donghae: ["#사진여행", "#로컬", "#산책"],
-    samcheok: ["#비경", "#가족여행", "#액티비티"],
-  };
+  gangneung: ["#커피", "#오션뷰", "#문화"],
+  sokcho: ["#자연", "#가족여행", "#맛집", "#호수"],
+  yangyang: ["#서핑", "#액티비티", "#청년여행"],
+  donghae: ["#사진여행", "#로컬", "#산책"],
+  samcheok: ["#비경", "#가족여행", "#액티비티"],
+};
 
   // 동반 인원별 태그입니다.
   // 혼자, 커플, 가족, 단체 여행인지에 따라 선호 장소가 달라질 수 있습니다.

@@ -11,7 +11,7 @@ import type{
 
 const REGION_IDS = [
   "gangneung",
-  "goseong-sokcho",
+  "sokcho",
   "yangyang",
   "donghae",
   "samcheok",
