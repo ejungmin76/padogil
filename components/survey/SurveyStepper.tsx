@@ -13,7 +13,7 @@ import type {
   TransportType,
 } from "@/types/survey";
 
-type SurveyKey = "partyType" | "transportType" | "petType" | "ageGroup";
+
 
 type DraftSurvey = Partial<Omit<SurveyResponse, "regionId">> & {
   regionId: RegionId;
