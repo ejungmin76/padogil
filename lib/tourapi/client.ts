@@ -127,15 +127,18 @@ export async function requestTourApi<T = unknown>(
     const header = data.response?.header;
     const body = data.response?.body;
 
-    if (header?.resultCode && header.resultCode !== "0000") {
-      return {
-        ok: false,
-        status: 502,
-        code: String(header.resultCode),
-        message: String(header.resultMsg ?? "관광공사 API 오류입니다."),
-        raw: data,
-      };
-    }
+   const resultCode = header?.resultCode ? String(header.resultCode) : undefined;
+const successResultCodes = ["0000", "00"];
+
+if (resultCode && !successResultCodes.includes(resultCode)) {
+  return {
+    ok: false,
+    status: 502,
+    code: resultCode,
+    message: String(header?.resultMsg ?? "관광공사 API 오류입니다."),
+    raw: data,
+  };
+}
 
     const items = toArray<T>(body?.items?.item);
 
