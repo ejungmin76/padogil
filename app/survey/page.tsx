@@ -1,7 +1,11 @@
+import { Suspense } from "react";
+
+import { SurveyStepper } from "@/components/survey/SurveyStepper";
+
 export default function SurveyPage() {
   return (
-    <main>
-      <h1>Survey Page</h1>
-    </main>
+    <Suspense>
+      <SurveyStepper />
+    </Suspense>
   );
 }
