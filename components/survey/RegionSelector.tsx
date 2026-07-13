@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RegionId } from "@/types/survey";
@@ -145,7 +146,7 @@ export default function RegionSelector() {
 
   const handleStartSurvey = () => {
     localStorage.setItem("selectedRegion", selectedRegion);
-    router.push("/survey");
+    router.push(`/survey?region=${selectedRegion}`);
   };
 
   const boatFilter =
@@ -276,10 +277,12 @@ export default function RegionSelector() {
                 {hoveredMapRegion === marker.id && (
                   <div className="regionPreview">
                     <div className="previewImageWrapper">
-                      <img
+                      <Image
                         src={PREVIEW_IMAGES[marker.id][timePhase]}
                         alt={`${getTimeText()}의 ${marker.name} 풍경`}
                         className="previewImage"
+                        fill
+                        sizes="200px"
                       />
                       <div className="previewTimeBadge">
                         {getTimeBadge()}
@@ -1183,7 +1186,7 @@ export default function RegionSelector() {
         }
 
         .sokcho {
-          background-image: url("/images/regions/gangneung-card.jpg");
+          background-image: url("/images/regions/sokcho-card.jpg");
           background-size: cover;
           background-position: center;
         }
