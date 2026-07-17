@@ -6,13 +6,12 @@ import { getPreferredTags } from "./tags";
 
 // 더미 장소에도 regionId가 필요합니다.
 // 기존 Place 타입에는 regionId가 없기 때문에, 이 파일 안에서만 확장해서 사용합니다.
-type SamplePlace = Place & {
-  regionId: RegionId;
+type RecommendationPlace = Place & {
+  regionId?: RegionId;
 };
-
 // 관광공사 API 연결 전까지 사용할 임시 장소 데이터입니다.
 // 실제 API가 붙으면 이 배열을 API 응답 기반 장소 목록으로 바꾸면 됩니다.
-const SAMPLE_PLACES: SamplePlace[] = [
+const SAMPLE_PLACES: RecommendationPlace[] = [
   {
     id: "yangyang-surfyy",
     name: "서피비치",
@@ -191,7 +190,11 @@ const SAMPLE_PLACES: SamplePlace[] = [
 
 // 배열의 특정 위치부터 count개 장소를 뽑습니다.
 // 장소 수가 부족하면 처음으로 돌아가서 다시 채워 코스당 3개 이상을 유지합니다.
-function pickPlaces(places: SamplePlace[], startIndex: number, count: number): Place[] {
+function pickPlaces(
+  places: RecommendationPlace[],
+  startIndex: number,
+  count: number,
+): Place[] {
   if (places.length === 0) {
     return [];
   }
@@ -222,17 +225,30 @@ function pickPlaces(places: SamplePlace[], startIndex: number, count: number): P
 }
 
 // 설문 응답을 기준으로 추천 코스 2~3개를 생성합니다.
-export function buildRecommendedCourses(survey: SurveyResponse): Course[] {
+export function buildRecommendedCourses(
+  survey: SurveyResponse,
+  places?: Place[],
+): Course[] {
   const preferredTags = getPreferredTags(survey);
 
-  // 1. 사용자가 선택한 권역의 장소만 우선 후보로 사용합니다.
-  const regionPlaces = SAMPLE_PLACES.filter((place) => {
+  // 1. TourAPI 등 외부에서 주입된 장소 후보가 있으면 우선 사용합니다.
+  const injectedPlaces: RecommendationPlace[] = (places ?? []).map((place) => ({
+    ...place,
+    regionId: (place as RecommendationPlace).regionId ?? survey.regionId,
+  }));
+
+  const hasEnoughInjectedPlaces = injectedPlaces.length >= 3;
+
+  // 2. 외부 후보가 없거나 부족하면 기존 더미 데이터를 fallback으로 사용합니다.
+  const regionSamplePlaces = SAMPLE_PLACES.filter((place) => {
     return place.regionId === survey.regionId;
   });
 
-  // 2. 혹시 해당 권역 장소가 부족하면 전체 더미 데이터를 fallback으로 사용합니다.
-  const candidates = regionPlaces.length >= 3 ? regionPlaces : SAMPLE_PLACES;
-
+  const candidates = hasEnoughInjectedPlaces
+    ? injectedPlaces
+    : regionSamplePlaces.length >= 3
+      ? regionSamplePlaces
+      : SAMPLE_PLACES;
   // 3. 설문 조건과 장소 태그를 기준으로 점수순 정렬합니다.
   const scoredPlaces = [...candidates].sort((a, b) => {
     return scorePlace(b, survey) - scorePlace(a, survey);
@@ -294,7 +310,9 @@ export function buildRecommendedCourses(survey: SurveyResponse): Course[] {
             : "자차 또는 렌터카 이동에 적합한 임시 추천입니다.",
         regionId: survey.regionId,
         durationLabel: "반나절",
-        recommendedReason: "설문 조건과 더미 장소 태그를 기준으로 점수화했습니다.",
+       recommendedReason: hasEnoughInjectedPlaces
+  ? "설문 조건과 TourAPI 장소 정보를 기준으로 점수화했습니다."
+  : "설문 조건과 더미 장소 태그를 기준으로 점수화했습니다.",
       } satisfies Course;
     })
     .filter((course) => course.places.length >= 3)
