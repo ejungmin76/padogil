@@ -9,7 +9,7 @@ function getCategoryFromContentType(contentTypeId: string): Place["category"] {
     case "28":
       return "leports";
     case "32":
-      return "tour";
+      return "stay";
     case "12":
     default:
       return "tour";
