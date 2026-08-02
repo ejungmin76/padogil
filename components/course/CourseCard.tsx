@@ -108,13 +108,7 @@ export default function CourseCard({
     };
   }, [isHovered, currentSlide, slideImages.length]);
 
-  /*
-   * 코스 데이터가 바뀌었을 때 현재 슬라이드를
-   * 첫 번째 이미지로 초기화한다.
-   */
-  useEffect(() => {
-    setCurrentSlide(0);
-  }, [course.id]);
+
 
   const moveSlide = (
     event: MouseEvent<HTMLButtonElement>,

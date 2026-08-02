@@ -16,6 +16,7 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+  const timer = setTimeout(() => {
     const stored = sessionStorage.getItem("padogil-courses");
 
     if (!stored) {
@@ -45,7 +46,10 @@ export default function CourseDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [params.courseId]);
+  }, 0);
+
+  return () => clearTimeout(timer);
+}, [params.courseId]);
 
   if (loading) {
     return (
