@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
   type CSSProperties,
+  type MouseEvent,
 } from "react";
 import type { Course } from "@/types/course";
 
@@ -45,6 +46,7 @@ function getPlaceType(category: string) {
   if (category === "food") return "맛집";
   if (category === "stay") return "숙소";
   if (category === "leports") return "액티비티";
+
   return "관광";
 }
 
@@ -79,29 +81,73 @@ export default function CourseCard({
   }, [course]);
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
+  /*
+   * 카드에 마우스가 올라가 있을 때만 동작한다.
+   *
+   * currentSlide가 바뀔 때마다 타이머가 새로 시작되므로
+   * 화살표나 점을 직접 누른 뒤에도 2초를 기다렸다가
+   * 다음 사진으로 넘어간다.
+   */
   useEffect(() => {
-    if (slideImages.length <= 1) return;
+    if (!isHovered || slideImages.length <= 1) {
+      return;
+    }
 
-    const interval = window.setInterval(() => {
+    const timer = window.setTimeout(() => {
       setCurrentSlide((current) =>
-        current === slideImages.length - 1 ? 0 : current + 1,
+        current === slideImages.length - 1
+          ? 0
+          : current + 1,
       );
-    }, 1500);
+    }, 2000);
 
     return () => {
-      window.clearInterval(interval);
+      window.clearTimeout(timer);
     };
-  }, [slideImages.length]);
+  }, [isHovered, currentSlide, slideImages.length]);
 
-  const moveSlide = (direction: "previous" | "next") => {
+  /*
+   * 코스 데이터가 바뀌었을 때 현재 슬라이드를
+   * 첫 번째 이미지로 초기화한다.
+   */
+  useEffect(() => {
+    setCurrentSlide(0);
+  }, [course.id]);
+
+  const moveSlide = (
+    event: MouseEvent<HTMLButtonElement>,
+    direction: "previous" | "next",
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (slideImages.length <= 1) {
+      return;
+    }
+
     setCurrentSlide((current) => {
       if (direction === "previous") {
-        return current === 0 ? slideImages.length - 1 : current - 1;
+        return current === 0
+          ? slideImages.length - 1
+          : current - 1;
       }
 
-      return current === slideImages.length - 1 ? 0 : current + 1;
+      return current === slideImages.length - 1
+        ? 0
+        : current + 1;
     });
+  };
+
+  const selectSlide = (
+    event: MouseEvent<HTMLButtonElement>,
+    slideIndex: number,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setCurrentSlide(slideIndex);
   };
 
   const visiblePlaces = course.places.slice(0, 4);
@@ -113,7 +159,12 @@ export default function CourseCard({
   } as CSSProperties;
 
   return (
-    <article className="courseCard" style={cardStyle}>
+    <article
+      className="courseCard"
+      style={cardStyle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="imageWrap">
         {slideImages.map((image, slideIndex) => (
           <Image
@@ -135,8 +186,17 @@ export default function CourseCard({
           type="button"
           className="heartButton"
           aria-label={`${course.title} 찜하기`}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
         >
-          ♡
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M12 20.4 10.55 19.08C5.4 14.4 2 11.32 2 7.55 2 4.47 4.42 2.05 7.5 2.05c1.74 0 3.41.81 4.5 2.09a6.02 6.02 0 0 1 4.5-2.09c3.08 0 5.5 2.42 5.5 5.5 0 3.77-3.4 6.85-8.55 11.54L12 20.4Z" />
+          </svg>
         </button>
 
         {slideImages.length > 1 && (
@@ -145,7 +205,9 @@ export default function CourseCard({
               type="button"
               className="slideButton previousButton"
               aria-label="이전 사진"
-              onClick={() => moveSlide("previous")}
+              onClick={(event) =>
+                moveSlide(event, "previous")
+              }
             >
               ‹
             </button>
@@ -154,19 +216,30 @@ export default function CourseCard({
               type="button"
               className="slideButton nextButton"
               aria-label="다음 사진"
-              onClick={() => moveSlide("next")}
+              onClick={(event) =>
+                moveSlide(event, "next")
+              }
             >
               ›
             </button>
 
-            <div className="slideDots" aria-label="사진 슬라이드">
+            <div
+              className="slideDots"
+              aria-label="사진 슬라이드"
+            >
               {slideImages.map((image, slideIndex) => (
                 <button
                   key={`${image}-dot`}
                   type="button"
-                  className={currentSlide === slideIndex ? "active" : ""}
+                  className={
+                    currentSlide === slideIndex
+                      ? "active"
+                      : ""
+                  }
                   aria-label={`${slideIndex + 1}번째 사진 보기`}
-                  onClick={() => setCurrentSlide(slideIndex)}
+                  onClick={(event) =>
+                    selectSlide(event, slideIndex)
+                  }
                 />
               ))}
             </div>
@@ -179,14 +252,20 @@ export default function CourseCard({
 
         {course.tags.length > 0 && (
           <div className="tagList">
-            {course.tags.slice(0, 4).map((tag) => (
-              <span key={tag}>#{tag}</span>
-            ))}
+            {course.tags.slice(0, 4).map((tag) => {
+              const cleanTag = tag.replace(/^#+/, "");
+
+              return (
+                <span key={tag}>#{cleanTag}</span>
+              );
+            })}
           </div>
         )}
 
         <section className="placeSection">
-          <div className="sectionTitle">방문 추천 장소</div>
+          <div className="sectionTitle">
+            방문 추천 장소
+          </div>
 
           <ol className="placeList">
             {visiblePlaces.map((place, placeIndex) => (
@@ -197,7 +276,9 @@ export default function CourseCard({
 
                 <div className="placeText">
                   <strong>{place.name}</strong>
-                  <small>{getPlaceType(place.category)}</small>
+                  <small>
+                    {getPlaceType(place.category)}
+                  </small>
                 </div>
               </li>
             ))}
@@ -220,7 +301,8 @@ export default function CourseCard({
           border: 1px solid #dbe3ed;
           border-radius: 18px;
           background: #ffffff;
-          box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+          box-shadow: 0 10px 28px
+            rgba(15, 23, 42, 0.07);
           transition:
             transform 0.2s ease,
             box-shadow 0.2s ease;
@@ -228,7 +310,8 @@ export default function CourseCard({
 
         .courseCard:hover {
           transform: translateY(-5px);
-          box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
+          box-shadow: 0 18px 38px
+            rgba(15, 23, 42, 0.12);
         }
 
         .imageWrap {
@@ -268,26 +351,45 @@ export default function CourseCard({
           color: #ffffff;
           font-size: 20px;
           font-weight: 900;
-          box-shadow: 0 6px 18px rgba(15, 23, 42, 0.2);
+          box-shadow: 0 6px 18px
+            rgba(15, 23, 42, 0.2);
         }
 
         .heartButton {
           position: absolute;
-          z-index: 4;
-          top: 11px;
-          right: 11px;
-          width: 42px;
-          height: 42px;
+          z-index: 5;
+          top: 12px;
+          right: 12px;
+          width: 34px;
+          height: 34px;
+          padding: 0;
           display: grid;
           place-items: center;
           border: 0;
           border-radius: 50%;
-          background: rgba(15, 23, 42, 0.2);
+          background: rgba(15, 23, 42, 0.28);
           color: #ffffff;
-          font-size: 32px;
-          line-height: 1;
           cursor: pointer;
-          backdrop-filter: blur(7px);
+          backdrop-filter: blur(6px);
+          transition:
+            transform 0.2s ease,
+            background 0.2s ease;
+        }
+
+        .heartButton svg {
+          width: 21px;
+          height: 21px;
+          display: block;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.8;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .heartButton:hover {
+          background: rgba(15, 23, 42, 0.45);
+          transform: scale(1.08);
         }
 
         .slideButton {
@@ -305,9 +407,18 @@ export default function CourseCard({
           font-size: 30px;
           line-height: 1;
           cursor: pointer;
+          opacity: 0;
+          pointer-events: none;
           backdrop-filter: blur(5px);
           transform: translateY(-50%);
-          transition: background 0.2s ease;
+          transition:
+            opacity 0.2s ease,
+            background 0.2s ease;
+        }
+
+        .courseCard:hover .slideButton {
+          opacity: 1;
+          pointer-events: auto;
         }
 
         .slideButton:hover {
@@ -442,23 +553,28 @@ export default function CourseCard({
         }
 
         .detailButton {
-          height: 50px;
-          margin-top: 18px;
+          position: relative;
+          width: 100%;
+          height: 48px;
+          margin-top: 16px;
+          box-sizing: border-box;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 18px;
+          gap: 14px;
+          border: 0;
           border-radius: 10px;
           background: var(--accent);
           color: #ffffff;
-          font-size: 15px;
+          font-size: 14px;
           font-weight: 900;
           text-decoration: none;
-          box-shadow: 0 8px 18px color-mix(
-            in srgb,
-            var(--accent) 28%,
-            transparent
-          );
+          box-shadow: 0 7px 16px
+            color-mix(
+              in srgb,
+              var(--accent) 25%,
+              transparent
+            );
           transition:
             filter 0.2s ease,
             transform 0.2s ease,
@@ -466,23 +582,32 @@ export default function CourseCard({
         }
 
         .detailButton:hover {
-          filter: brightness(0.92);
-          transform: translateY(-2px);
-          box-shadow: 0 12px 24px color-mix(
-            in srgb,
-            var(--accent) 38%,
-            transparent
-          );
+          filter: brightness(0.93);
+          transform: translateY(-1px);
+          box-shadow: 0 10px 22px
+            color-mix(
+              in srgb,
+              var(--accent) 35%,
+              transparent
+            );
         }
 
         .detailButton strong {
+          position: absolute;
+          right: 22px;
           font-size: 23px;
+          font-weight: 400;
           line-height: 1;
         }
 
         @media (max-width: 640px) {
           .imageWrap {
             height: 200px;
+          }
+
+          .slideButton {
+            opacity: 1;
+            pointer-events: auto;
           }
         }
       `}</style>

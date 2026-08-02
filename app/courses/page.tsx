@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import CourseList from "@/components/course/CourseList";
 import { SAMPLE_COURSES } from "@/lib/course/sample-courses";
 import type { Course } from "@/types/course";
+import type { SurveyResponse } from "@/types/survey";
 
 type StoredCourseResponse = {
   courses?: Course[];
@@ -25,6 +26,32 @@ const REGION_LABELS: Record<string, string> = {
   samcheok: "삼척",
 };
 
+const PARTY_LABELS = {
+  solo: "혼자",
+  couple: "2인 / 커플",
+  family: "가족",
+  group: "단체",
+};
+
+const TRANSPORT_LABELS = {
+  car: "자차",
+  public: "대중교통",
+  rental: "렌터카",
+};
+
+const PET_LABELS = {
+  none: "동반 안 함",
+  small: "소형견",
+  large: "대형견",
+};
+
+const THEME_LABELS = {
+  "teens-twenties": "액티비티",
+  thirties: "맛집·카페",
+  forties: "자연·문화",
+  "fifties-plus": "힐링",
+};
+
 export default function CoursesPage() {
   const [state, setState] = useState<PageState>({
     courses: [],
@@ -32,8 +59,11 @@ export default function CoursesPage() {
     empty: false,
   });
 
+  const [survey, setSurvey] = useState<SurveyResponse | null>(null);
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
+      const storedSurvey = sessionStorage.getItem("padogil-survey");
       const stored = sessionStorage.getItem("padogil-courses");
 
       if (!stored) {
@@ -46,6 +76,10 @@ export default function CoursesPage() {
       }
 
       try {
+        if (storedSurvey) {
+          setSurvey(JSON.parse(storedSurvey));
+        }
+
         const parsed = JSON.parse(stored) as
           | StoredCourseResponse
           | Course[];
@@ -175,7 +209,9 @@ export default function CoursesPage() {
               <span className="conditionIcon">♙</span>
               <div>
                 <small>여행 타입</small>
-                <strong>맞춤 추천</strong>
+                <strong>
+                  {survey ? PARTY_LABELS[survey.partyType] : "-"}
+                </strong>
               </div>
             </div>
 
@@ -183,7 +219,9 @@ export default function CoursesPage() {
               <span className="conditionIcon">▣</span>
               <div>
                 <small>이동 수단</small>
-                <strong>설문 결과 반영</strong>
+                <strong>
+                  {survey ? TRANSPORT_LABELS[survey.transportType] : "-"}
+                </strong>
               </div>
             </div>
 
@@ -191,7 +229,9 @@ export default function CoursesPage() {
               <span className="conditionIcon">◌</span>
               <div>
                 <small>반려동물</small>
-                <strong>코스별 안내</strong>
+                <strong>
+                  {survey ? PET_LABELS[survey.petType] : "-"}
+                </strong>
               </div>
             </div>
           </div>
@@ -201,14 +241,9 @@ export default function CoursesPage() {
           <h3>관심 테마</h3>
 
           <div className="interestTags">
-            {[
-              "바다·해변",
-              "카페·브런치",
-              "자연·힐링",
-              "사진 명소",
-            ].map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
+            {survey && (
+              <span>{THEME_LABELS[survey.ageGroup]}</span>
+            )}
           </div>
 
           <div className="sidebarInfo">
