@@ -61,6 +61,20 @@ export const SAMPLE_COURSES: Course[] = [
     mainImageUrl: "/images/regions/gangneung-card.jpg",
     places: [
       {
+  id: "hajodae",
+  name: "하조대 전망대",
+  category: "tour",
+  address: "강원 양양군 현북면 하조대해안길 119",
+  imageUrl: "/images/regions/yangyang-day.jpg",
+  tags: ["전망", "산책", "바다"],
+  isPetFriendly: true,
+  parking: "주차 가능",
+  openTime: "상시 개방",
+  tel: "033-000-0000",
+  latitude: 38.0201,
+  longitude: 128.7352,
+},
+      {
         id: "anmok-beach",
         name: "안목해변",
         category: "tour",
