@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Course } from "@/types/course";
+import type { SurveyResponse } from "@/types/survey";
+
+import CourseDetail from "@/components/course/CourseDetail";
 
 type StoredCourseResponse = {
   courses?: Course[];
@@ -14,10 +17,12 @@ export default function CourseDetailPage() {
 
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
+  const [survey, setSurvey] = useState<SurveyResponse | null>(null);
 
   useEffect(() => {
   const timer = setTimeout(() => {
     const stored = sessionStorage.getItem("padogil-courses");
+    const storedSurvey = sessionStorage.getItem("padogil-survey");
 
     if (!stored) {
       setLoading(false);
@@ -38,6 +43,14 @@ export default function CourseDetailPage() {
       const selectedCourse = courses.find(
         (item) => item.id === params.courseId,
       );
+
+      if (storedSurvey) {
+        const parsedSurvey = JSON.parse(
+          storedSurvey,
+        ) as SurveyResponse;
+
+        setSurvey(parsedSurvey);
+      }
 
       setCourse(selectedCourse ?? null);
     } catch (error) {
@@ -132,162 +145,9 @@ export default function CourseDetailPage() {
   }
 
   return (
-    <main className="page">
-      <div className="topBar">
-        <Link href="/courses">
-          ← 추천 코스로 돌아가기
-        </Link>
-      </div>
-
-      <section className="hero">
-        <span>{course.durationLabel ?? "추천 코스"}</span>
-        <h1>{course.title}</h1>
-        <p>{course.summary}</p>
-      </section>
-
-      <section className="content">
-        <div>
-          <h2>주요 장소</h2>
-
-          <ol>
-            {course.places.map((place) => (
-              <li key={place.id}>
-                <strong>{place.name}</strong>
-                <span>{place.address}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        <aside>
-          <h2>코스 정보</h2>
-
-          <p>
-            <strong>스타일</strong>
-            {course.estimatedStyle ?? "맞춤 추천 여행"}
-          </p>
-
-          <p>
-            <strong>이동 안내</strong>
-            {course.transportNote ??
-              "상세 이동 정보를 확인해 주세요."}
-          </p>
-
-          <p>
-            <strong>반려동물</strong>
-            {course.isPetFriendly
-              ? "동반 가능"
-              : "동반 어려움"}
-          </p>
-        </aside>
-      </section>
-
-      <style jsx>{`
-        .page {
-          min-height: 100vh;
-          padding: 40px;
-          background: #f8fafc;
-          color: #111827;
-        }
-
-        .topBar,
-        .hero,
-        .content {
-          width: 100%;
-          max-width: 1100px;
-          margin: 0 auto;
-        }
-
-        .topBar a {
-          color: #2563eb;
-          font-weight: 800;
-          text-decoration: none;
-        }
-
-        .hero {
-          margin-top: 40px;
-          padding: 32px;
-          border-radius: 22px;
-          background: #ffffff;
-          box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
-        }
-
-        .hero span {
-          color: #0f766e;
-          font-size: 12px;
-          font-weight: 900;
-        }
-
-        .hero h1 {
-          margin: 10px 0 0;
-          font-size: 40px;
-        }
-
-        .hero p {
-          color: #64748b;
-          line-height: 1.7;
-        }
-
-        .content {
-          margin-top: 24px;
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) 320px;
-          gap: 24px;
-        }
-
-        .content > div,
-        .content aside {
-          padding: 26px;
-          border-radius: 18px;
-          background: #ffffff;
-          box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
-        }
-
-        .content h2 {
-          margin-top: 0;
-        }
-
-        .content ol {
-          margin: 0;
-          padding-left: 22px;
-        }
-
-        .content li {
-          margin-bottom: 18px;
-        }
-
-        .content li strong,
-        .content li span {
-          display: block;
-        }
-
-        .content li span {
-          margin-top: 4px;
-          color: #64748b;
-          font-size: 13px;
-        }
-
-        .content aside p {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-          color: #475569;
-        }
-
-        @media (max-width: 760px) {
-          .page {
-            padding: 24px 20px;
-          }
-
-          .hero h1 {
-            font-size: 30px;
-          }
-
-          .content {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
-    </main>
+  <CourseDetail
+    course={course}
+    survey={survey}
+  />
   );
 }
